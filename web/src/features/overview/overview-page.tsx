@@ -102,46 +102,61 @@ export const OverviewPage = () => {
               detail="Positive means wind was overestimated"
             />
           </MetricGrid>
-          <section className="bg-card rounded-lg border p-4">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="font-medium">Estimated wind generation</h3>
-                <p className="text-muted-foreground text-xs">
-                  Forecast adjusted by the historical bias of{" "}
-                  {formatMw(historicalBias)}
-                </p>
+          <div className="grid gap-5 lg:grid-cols-2">
+            <section className="bg-card flex min-h-[30rem] flex-col rounded-lg border p-4">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="font-medium">Estimated wind generation</h3>
+                  <p className="text-muted-foreground text-xs">
+                    Forecast adjusted by the historical bias of{" "}
+                    {formatMw(historicalBias)}
+                  </p>
+                </div>
+                <div className="bg-muted flex rounded-md p-1">
+                  <button
+                    className={`rounded-sm px-3 py-1.5 text-xs ${view === "chart" ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}
+                    onClick={() => setView("chart")}
+                    type="button"
+                  >
+                    Chart
+                  </button>
+                  <button
+                    className={`rounded-sm px-3 py-1.5 text-xs ${view === "table" ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}
+                    onClick={() => setView("table")}
+                    type="button"
+                  >
+                    Table
+                  </button>
+                </div>
               </div>
-              <div className="bg-muted flex rounded-md p-1">
-                <button
-                  className={`rounded-sm px-3 py-1.5 text-xs ${view === "chart" ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}
-                  onClick={() => setView("chart")}
-                  type="button"
-                >
-                  Chart
-                </button>
-                <button
-                  className={`rounded-sm px-3 py-1.5 text-xs ${view === "table" ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}
-                  onClick={() => setView("table")}
-                  type="button"
-                >
-                  Table
-                </button>
-              </div>
-            </div>
-            {view === "chart" ? (
+              {view === "chart" ? (
+                <ForecastActualChart
+                  intervals={forecastIntervals}
+                  showActual={false}
+                  forecastName="Adjusted estimate"
+                />
+              ) : (
+                <IntervalTable
+                  intervals={forecastIntervals}
+                  showActual={false}
+                  forecastLabel="Adjusted estimate"
+                />
+              )}
+            </section>
+            <section className="bg-card min-h-[30rem] rounded-lg border p-4">
+              <h3 className="mb-1 font-medium">
+                Forecast versus actual generation
+              </h3>
+              <p className="text-muted-foreground mb-3 text-xs">
+                Hover an interval to see the forecast error.
+              </p>
               <ForecastActualChart
-                intervals={forecastIntervals}
-                showActual={false}
-                forecastName="Adjusted estimate"
+                intervals={data.intervals}
+                showError
+                showLegend={false}
               />
-            ) : (
-              <IntervalTable
-                intervals={forecastIntervals}
-                showActual={false}
-                forecastLabel="Adjusted estimate"
-              />
-            )}
-          </section>
+            </section>
+          </div>
         </>
       )}
     </div>

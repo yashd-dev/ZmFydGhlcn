@@ -19,7 +19,12 @@ export const useUrlFilters = () => {
     () => ""
   );
   const params = new URLSearchParams(search);
-  const storedStart = window.localStorage.getItem("wind-delivery-date") ?? "";
+  let storedStart = "";
+  try {
+    storedStart = window.localStorage.getItem("wind-delivery-date") ?? "";
+  } catch {
+    // Storage can be blocked by the browser.
+  }
   const requestedStart = params.get("start_date") || storedStart;
   const requestedEnd = params.get("end_date") ?? "";
   const startDate =
@@ -56,7 +61,11 @@ export const useUrlFilters = () => {
       if (value) {
         next.set(name, value);
         if (key === "startDate") {
-          window.localStorage.setItem("wind-delivery-date", value);
+          try {
+            window.localStorage.setItem("wind-delivery-date", value);
+          } catch {
+            // Storage can be blocked by the browser.
+          }
         }
       } else {
         next.delete(name);

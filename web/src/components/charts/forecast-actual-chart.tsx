@@ -19,11 +19,13 @@ export const ForecastActualChart = ({
   showActual = true,
   forecastName = "Forecast",
   showError = false,
+  showLegend = true,
 }: {
   intervals: Interval[];
   showActual?: boolean;
   forecastName?: string;
   showError?: boolean;
+  showLegend?: boolean;
 }) => {
   const data = intervals
     .map((item) => ({
@@ -34,7 +36,7 @@ export const ForecastActualChart = ({
     }))
     .filter((item) => item.forecast !== null || item.actual !== null);
   return (
-    <div className="h-80 w-full">
+    <div className="h-96 w-full">
       {data.length ? (
         <ResponsiveContainer>
           <LineChart
@@ -45,7 +47,7 @@ export const ForecastActualChart = ({
             <XAxis dataKey="label" minTickGap={45} tick={{ fontSize: 10 }} />
             <YAxis tick={{ fontSize: 10 }} unit=" MW" />
             <Tooltip content={<ChartTooltip showError={showError} />} />
-            {showActual && <Legend />}
+            {showActual && showLegend && <Legend />}
             <Line
               type="monotone"
               dataKey="forecast"

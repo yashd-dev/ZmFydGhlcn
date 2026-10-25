@@ -14,7 +14,7 @@ export const FilterBar = ({ singleDate = false }: { singleDate?: boolean }) => {
           form.get(singleDate ? "delivery_date" : "start_date")
         );
         setFilters({
-          cutoff: "09:00",
+          cutoff: filters.cutoff,
           endDate: singleDate ? startDate : String(form.get("end_date")),
           startDate,
         });
@@ -49,7 +49,7 @@ export const FilterBar = ({ singleDate = false }: { singleDate?: boolean }) => {
       )}
       <div className="text-muted-foreground grid gap-1 text-xs">
         Purchase decision by
-        <span className="text-foreground text-sm">09:00</span>
+        <span className="text-foreground text-sm">{filters.cutoff}</span>
       </div>
       <Button type="submit">Apply filters</Button>
     </form>
