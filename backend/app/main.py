@@ -11,6 +11,7 @@ from .repository import repository
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     repository.initialize()
+    repository.seed_if_empty()
     yield
 
 

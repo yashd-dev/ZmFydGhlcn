@@ -20,7 +20,7 @@ def parse_cutoff(value: str, decision_date: date) -> datetime:
 
 
 def hourly_targets(start: date, end: date) -> list[datetime]:
-    current = datetime.combine(start + timedelta(days=1), time.min, ZoneInfo("UTC"))
+    current = datetime.combine(start, time.min, ZoneInfo("UTC"))
     finish = datetime.combine(end + timedelta(days=1), time.min, ZoneInfo("UTC"))
     targets: list[datetime] = []
     while current < finish:

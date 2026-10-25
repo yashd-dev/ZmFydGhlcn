@@ -24,6 +24,50 @@ class Repository:
         with self.connection() as connection:
             connection.execute(schema)
 
+    def seed_if_empty(self) -> None:
+        from .bmrs import fetch_seed_data
+
+        actual_count, forecast_count = self.counts()
+        if actual_count and forecast_count:
+            return
+        actuals, forecasts = fetch_seed_data()
+        with self.connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.executemany(
+                    """
+                    INSERT INTO actuals
+                        (start_time, settlement_date, settlement_period, mw, publish_time)
+                    VALUES (%s, %s, %s, %s, %s)
+                    ON CONFLICT (start_time) DO UPDATE SET
+                        settlement_date = EXCLUDED.settlement_date,
+                        settlement_period = EXCLUDED.settlement_period,
+                        mw = EXCLUDED.mw,
+                        publish_time = EXCLUDED.publish_time
+                    """,
+                    [
+                        (
+                            row["startTime"],
+                            row["settlementDate"],
+                            row["settlementPeriod"],
+                            row["generation"],
+                            row["publishTime"],
+                        )
+                        for row in actuals
+                    ],
+                )
+                cursor.executemany(
+                    """
+                    INSERT INTO forecasts (start_time, publish_time, mw)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (start_time, publish_time) DO UPDATE SET
+                        mw = EXCLUDED.mw
+                    """,
+                    [
+                        (row["startTime"], row["publishTime"], row["generation"])
+                        for row in forecasts
+                    ],
+                )
+
     def counts(self) -> tuple[int, int]:
         with self.connection() as connection:
             actual_count = connection.execute(

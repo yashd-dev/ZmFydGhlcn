@@ -1,4 +1,4 @@
-from datetime import date, datetime, time, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query
@@ -92,7 +92,7 @@ def forecasts(
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     values = repository.forecasts_between(
         datetime.combine(start_date, time.min, timezone.utc),
-        datetime.combine(end_date, time.min, timezone.utc),
+        datetime.combine(end_date + timedelta(days=1), time.min, timezone.utc),
     )
     return [
         ForecastResponse(
