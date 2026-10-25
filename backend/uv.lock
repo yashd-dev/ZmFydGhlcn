@@ -291,6 +291,18 @@ wheels = [
 ]
 
 [[package]]
+name = "psycopg-pool"
+version = "3.2.7"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9d/8f/3ec52b17087c2ed5fa32b64fd4814dde964c9aa4bd49d0d30fc24725ca6d/psycopg_pool-3.2.7.tar.gz", hash = "sha256:a77d531bfca238e49e5fb5832d65b98e69f2c62bfda3d2d4d833696bdc9ca54b", size = 29765, upload-time = "2025-10-26T00:46:10.379Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e7/59/74e752f605c6f0e351d4cf1c54fb9a1616dc800db4572b95bbfbb1a6225f/psycopg_pool-3.2.7-py3-none-any.whl", hash = "sha256:4b47bb59d887ef5da522eb63746b9f70e2faf967d34aac4f56ffc65e9606728f", size = 38232, upload-time = "2025-10-26T00:46:00.496Z" },
+]
+
+[[package]]
 name = "pydantic"
 version = "2.12.5"
 source = { registry = "https://pypi.org/simple" }
@@ -657,6 +669,7 @@ dependencies = [
     { name = "black" },
     { name = "fastapi" },
     { name = "psycopg", extra = ["binary"] },
+    { name = "psycopg-pool" },
     { name = "pydantic" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -672,6 +685,7 @@ requires-dist = [
     { name = "black", specifier = ">=26.10.1" },
     { name = "fastapi", specifier = "==0.121.3" },
     { name = "psycopg", extras = ["binary"], specifier = "==3.2.12" },
+    { name = "psycopg-pool", specifier = "==3.2.7" },
     { name = "pydantic", specifier = "==2.12.5" },
     { name = "uvicorn", extras = ["standard"], specifier = "==0.38.0" },
 ]

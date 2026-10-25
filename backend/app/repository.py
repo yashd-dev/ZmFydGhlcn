@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Iterator
 
 import psycopg
+from psycopg_pool import ConnectionPool
 
 from .config import require_db_url
 from .domain import Actual, Forecast
@@ -13,11 +14,23 @@ from .domain import Actual, Forecast
 class Repository:
     def __init__(self) -> None:
         self.schema_path = Path(__file__).resolve().parents[1] / "schema" / "schema.sql"
+        self.pool: ConnectionPool | None = None
+
+    def _pool(self) -> ConnectionPool:
+        if self.pool is None:
+            self.pool = ConnectionPool(
+                require_db_url(), min_size=1, max_size=10, open=True
+            )
+        return self.pool
 
     @contextmanager
     def connection(self) -> Iterator[psycopg.Connection]:
-        with psycopg.connect(require_db_url(), connect_timeout=10) as connection:
+        with self._pool().connection() as connection:
             yield connection
+
+    def close(self) -> None:
+        if self.pool is not None:
+            self.pool.close()
 
     def initialize(self) -> None:
         schema = self.schema_path.read_text(encoding="utf-8")
@@ -27,11 +40,16 @@ class Repository:
     def seed_if_empty(self) -> None:
         from .bmrs import fetch_seed_data
 
-        actual_count, forecast_count = self.counts()
-        if actual_count and forecast_count:
-            return
-        actuals, forecasts = fetch_seed_data()
         with self.connection() as connection:
+            connection.execute(
+                "SELECT pg_advisory_xact_lock(hashtext('wind-intelligence-seed'))"
+            )
+            actual_count, forecast_count = connection.execute(
+                "SELECT (SELECT count(*) FROM actuals), (SELECT count(*) FROM forecasts)"
+            ).fetchone()
+            if actual_count and forecast_count:
+                return
+            actuals, forecasts = fetch_seed_data()
             with connection.cursor() as cursor:
                 cursor.executemany(
                     """

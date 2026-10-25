@@ -4,15 +4,19 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api import router
-from .config import settings
+from .config import settings, validate_settings
 from .repository import repository
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    validate_settings()
     repository.initialize()
     repository.seed_if_empty()
-    yield
+    try:
+        yield
+    finally:
+        repository.close()
 
 
 app = FastAPI(title="Wind Intelligence API", version="0.1.0", lifespan=lifespan)

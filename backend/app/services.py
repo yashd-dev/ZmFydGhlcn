@@ -1,5 +1,5 @@
 from collections import Counter
-from datetime import date, datetime, time, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 from .config import settings
@@ -20,13 +20,31 @@ def parse_cutoff(value: str, decision_date: date) -> datetime:
 
 
 def hourly_targets(start: date, end: date) -> list[datetime]:
-    current = datetime.combine(start, time.min, ZoneInfo("UTC"))
-    finish = datetime.combine(end + timedelta(days=1), time.min, ZoneInfo("UTC"))
+    current = datetime.combine(start, time.min, ZoneInfo(settings.timezone)).astimezone(
+        UTC
+    )
+    finish = datetime.combine(
+        end + timedelta(days=1), time.min, ZoneInfo(settings.timezone)
+    ).astimezone(UTC)
     targets: list[datetime] = []
     while current < finish:
         targets.append(current)
         current += timedelta(hours=1)
     return targets
+
+
+def period_bounds(start: date, end: date) -> tuple[datetime, datetime]:
+    return (
+        datetime.combine(start, time.min, ZoneInfo(settings.timezone)).astimezone(UTC),
+        datetime.combine(
+            end + timedelta(days=1), time.min, ZoneInfo(settings.timezone)
+        ).astimezone(UTC),
+    )
+
+
+def delivery_cutoff(cutoff: str, start_time: datetime) -> datetime:
+    delivery_date = start_time.astimezone(ZoneInfo(settings.timezone)).date()
+    return parse_cutoff(cutoff, delivery_date - timedelta(days=1))
 
 
 def evaluate_period(
@@ -48,7 +66,7 @@ def evaluate_period(
             target,
             forecasts.get(target, []),
             actuals,
-            parse_cutoff(cutoff, target.date() - timedelta(days=1)),
+            delivery_cutoff(cutoff, target),
             alignment,
         )
         for target in targets

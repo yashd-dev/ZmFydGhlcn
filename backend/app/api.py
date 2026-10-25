@@ -1,4 +1,4 @@
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import date
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query
@@ -11,7 +11,13 @@ from .schemas import (
     IntervalResponse,
     PolicyResponse,
 )
-from .services import evaluate_period, parse_cutoff, summarize
+from .services import (
+    delivery_cutoff,
+    evaluate_period,
+    parse_cutoff,
+    period_bounds,
+    summarize,
+)
 
 router = APIRouter(prefix="/api/v1")
 
@@ -87,19 +93,16 @@ def forecasts(
 ) -> list[ForecastResponse]:
     validate_period(start_date, end_date)
     try:
-        cutoff_time = parse_cutoff(cutoff, start_date)
+        parse_cutoff(cutoff, start_date)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
-    values = repository.forecasts_between(
-        datetime.combine(start_date, time.min, timezone.utc),
-        datetime.combine(end_date + timedelta(days=1), time.min, timezone.utc),
-    )
+    values = repository.forecasts_between(*period_bounds(start_date, end_date))
     return [
         ForecastResponse(
             start_time=item.start_time,
             publish_time=item.publish_time,
             forecast_mw=item.mw,
-            eligible=item.publish_time <= cutoff_time,
+            eligible=item.publish_time <= delivery_cutoff(cutoff, item.start_time),
         )
         for items in values.values()
         for item in items
