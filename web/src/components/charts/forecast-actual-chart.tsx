@@ -16,12 +16,19 @@ import { ChartTooltip } from "./chart-tooltip";
 
 export const ForecastActualChart = ({
   intervals,
+  showActual = true,
+  forecastName = "Forecast",
+  showError = false,
 }: {
   intervals: Interval[];
+  showActual?: boolean;
+  forecastName?: string;
+  showError?: boolean;
 }) => {
   const data = intervals
     .map((item) => ({
-      actual: item.actual_mw,
+      actual: showActual ? item.actual_mw : null,
+      error: item.error_mw,
       forecast: item.forecast_mw,
       label: formatUk(item.start_time),
     }))
@@ -37,27 +44,29 @@ export const ForecastActualChart = ({
             <CartesianGrid className="stroke-border [stroke-dasharray:2_3]" />
             <XAxis dataKey="label" minTickGap={45} tick={{ fontSize: 10 }} />
             <YAxis tick={{ fontSize: 10 }} unit=" MW" />
-            <Tooltip content={<ChartTooltip />} />
-            <Legend />
+            <Tooltip content={<ChartTooltip showError={showError} />} />
+            {showActual && <Legend />}
             <Line
               type="monotone"
               dataKey="forecast"
-              name="Forecast"
+              name={forecastName}
               stroke="var(--chart-1)"
               strokeWidth={2}
               dot={false}
               strokeDasharray="5 4"
               connectNulls={false}
             />
-            <Line
-              type="monotone"
-              dataKey="actual"
-              name="Actual"
-              stroke="var(--primary)"
-              strokeWidth={2}
-              dot={false}
-              connectNulls={false}
-            />
+            {showActual && (
+              <Line
+                type="monotone"
+                dataKey="actual"
+                name="Actual"
+                stroke="var(--primary)"
+                strokeWidth={2}
+                dot={false}
+                connectNulls={false}
+              />
+            )}
           </LineChart>
         </ResponsiveContainer>
       ) : (

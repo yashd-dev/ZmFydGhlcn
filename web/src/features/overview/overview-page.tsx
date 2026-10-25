@@ -1,80 +1,146 @@
+import { useState } from "react";
+
 import { ForecastActualChart } from "@/src/components/charts/forecast-actual-chart";
 import { MetricCard } from "@/src/components/metrics/metric-card";
 import { MetricGrid } from "@/src/components/metrics/metric-grid";
 import { IntervalTable } from "@/src/components/tables/interval-table";
 import { useAccuracy } from "@/src/hooks/use-accuracy";
+import { useForecasts } from "@/src/hooks/use-forecasts";
 import { useUrlFilters } from "@/src/hooks/use-url-filters";
-import { metric } from "@/src/lib/formatters";
+import { formatMw, metric } from "@/src/lib/formatters";
+import type { Forecast, Interval } from "@/src/types/api";
 
 import { FilterBar, QueryState } from "../shared";
 
 export const OverviewPage = () => {
   const { filters } = useUrlFilters();
-  const query = useAccuracy(filters);
-  const { data } = query;
+  const forecastQuery = useForecasts({
+    cutoff: filters.cutoff,
+    endDate: filters.startDate,
+    startDate: filters.startDate,
+  });
+  const historyQuery = useAccuracy({
+    ...filters,
+    endDate: filters.startDate,
+    startDate: `${filters.startDate.slice(0, 7)}-01`,
+  });
+  const [view, setView] = useState<"chart" | "table">("chart");
+  const { data, error: historyError, isPending: historyPending } = historyQuery;
+  const { error: forecastError, isPending: forecastPending } = forecastQuery;
+  const historicalBias =
+    typeof data?.metrics.bias === "number" ? data.metrics.bias : 0;
+  const selected = new Map<string, Forecast>();
+  for (const forecast of forecastQuery.data ?? []) {
+    const existing = selected.get(forecast.start_time);
+    if (
+      forecast.eligible &&
+      (!existing || forecast.publish_time > existing.publish_time)
+    ) {
+      selected.set(forecast.start_time, forecast);
+    }
+  }
+  const forecastIntervals: Interval[] = [...selected.values()].map(
+    (forecast) => ({
+      actual_mw: null,
+      error_mw: null,
+      forecast_mw: forecast.forecast_mw - historicalBias,
+      publish_time: forecast.publish_time,
+      reason: null,
+      start_time: forecast.start_time,
+      status: "forecast",
+    })
+  );
+  const loading = forecastPending || historyPending;
+  const error = forecastError ?? historyError;
   const handleRetry = async () => {
-    await query.refetch();
+    await Promise.all([forecastQuery.refetch(), historyQuery.refetch()]);
   };
   return (
     <div className="space-y-5 p-4 md:p-8">
       <div>
-        <p className="text-primary text-xs tracking-widest uppercase">
-          Decision support
-        </p>
         <h2 className="mt-1 text-2xl font-semibold">
-          Wind generation evaluation
+          Wind forecast for the selected delivery period
         </h2>
+        <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
+          Select the delivery date to get a rough expected generation estimate,
+          adjusted by the historical forecast bias.
+        </p>
       </div>
-      <FilterBar />
-      <QueryState
-        loading={query.isPending}
-        error={query.error}
-        onRetry={handleRetry}
-      />
+      <FilterBar singleDate />
+      <QueryState loading={loading} error={error} onRetry={handleRetry} />
       {data && (
         <>
           <MetricGrid>
             <MetricCard
-              label="MAE"
+              label="Estimated wind generation"
+              value={
+                forecastIntervals.length
+                  ? formatMw(
+                      forecastIntervals.reduce(
+                        (sum, interval) => sum + (interval.forecast_mw ?? 0),
+                        0
+                      ) / forecastIntervals.length
+                    )
+                  : "N/A"
+              }
+              detail="Average MW after historical bias adjustment"
+              featured
+            />
+            <MetricCard
+              label="Historical MAE"
               value={metric(data.metrics, "mae")}
-              detail="Average absolute error · MW"
+              detail="Typical miss in either direction"
             />
             <MetricCard
-              label="RMSE"
+              label="Historical RMSE"
               value={metric(data.metrics, "rmse")}
-              detail="Larger errors weighted · MW"
+              detail="Conservative planning measure"
             />
             <MetricCard
-              label="Mean signed error"
+              label="Historical bias"
               value={metric(data.metrics, "bias")}
-              detail="Positive means overforecast · MW"
-            />
-            <MetricCard
-              label="Matched intervals"
-              value={String(data.metrics.matched_count ?? 0)}
-              detail={`${data.period.start_date} to ${data.period.end_date}`}
+              detail="Positive means wind was overestimated"
             />
           </MetricGrid>
-          {data.excluded_count > 0 && (
-            <output className="border-primary/40 bg-primary/5 border p-3 text-sm">
-              <strong>{data.excluded_count} intervals excluded.</strong>{" "}
-              {Object.entries(data.exclusions)
-                .map(([reason, count]) => `${reason}: ${count}`)
-                .join(" · ")}
-            </output>
-          )}
-          <section className="bg-card border p-4">
-            <div className="mb-4">
-              <h3 className="font-medium">Forecast versus actual</h3>
-              <p className="text-muted-foreground text-xs">
-                UK local display · API values in MW
-              </p>
+          <section className="bg-card rounded-lg border p-4">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="font-medium">Estimated wind generation</h3>
+                <p className="text-muted-foreground text-xs">
+                  Forecast adjusted by the historical bias of{" "}
+                  {formatMw(historicalBias)}
+                </p>
+              </div>
+              <div className="bg-muted flex rounded-md p-1">
+                <button
+                  className={`rounded-sm px-3 py-1.5 text-xs ${view === "chart" ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}
+                  onClick={() => setView("chart")}
+                  type="button"
+                >
+                  Chart
+                </button>
+                <button
+                  className={`rounded-sm px-3 py-1.5 text-xs ${view === "table" ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}
+                  onClick={() => setView("table")}
+                  type="button"
+                >
+                  Table
+                </button>
+              </div>
             </div>
-            <ForecastActualChart intervals={data.intervals} />
-          </section>
-          <section className="bg-card border p-4">
-            <h3 className="mb-4 font-medium">Bounded interval comparison</h3>
-            <IntervalTable intervals={data.intervals} />
+            {view === "chart" ? (
+              <ForecastActualChart
+                intervals={forecastIntervals}
+                showActual={false}
+                forecastName="Adjusted estimate"
+              />
+            ) : (
+              <IntervalTable
+                intervals={forecastIntervals}
+                showActual={false}
+                forecastLabel="Adjusted estimate"
+              />
+            )}
           </section>
         </>
       )}

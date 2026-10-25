@@ -12,8 +12,8 @@ export const DashboardLayout = ({ children }: { children: ReactNode }) => (
     style={{ "--sidebar-width": "15.625rem" } as CSSProperties}
   >
     <DashboardSidebar />
-    <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-0.5 pl-0">
-      <div className="bg-background flex min-h-0 flex-1 flex-col shadow-sm">
+    <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3 md:p-4">
+      <div className="bg-background flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border shadow-sm">
         <DashboardTopbar />
         <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
       </div>

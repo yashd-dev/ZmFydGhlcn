@@ -7,4 +7,5 @@ export const useForecasts = (params: ForecastParams) =>
   useQuery({
     queryFn: ({ signal }) => getForecasts(params, signal),
     queryKey: ["forecasts", params],
+    refetchOnMount: false,
   });

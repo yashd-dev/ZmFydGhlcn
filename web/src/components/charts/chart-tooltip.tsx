@@ -4,12 +4,13 @@ export const ChartTooltip = ({
   active,
   payload,
   label,
-}: TooltipProps<number, string>) => {
+  showError = false,
+}: TooltipProps<number, string> & { showError?: boolean }) => {
   if (!active || !payload?.length) {
     return null;
   }
   return (
-    <div className="bg-card border px-3 py-2 text-xs shadow-sm">
+    <div className="bg-card rounded-lg border px-3 py-2 text-xs shadow-sm">
       <div className="text-muted-foreground mb-1">{label}</div>
       {payload.map((item) => (
         <div key={item.dataKey}>
@@ -19,6 +20,9 @@ export const ChartTooltip = ({
             : `${Number(item.value).toFixed(2)} MW`}
         </div>
       ))}
+      {showError && typeof payload[0]?.payload?.error === "number" && (
+        <div>Error: {Number(payload[0]?.payload?.error).toFixed(2)} MW</div>
+      )}
     </div>
   );
 };

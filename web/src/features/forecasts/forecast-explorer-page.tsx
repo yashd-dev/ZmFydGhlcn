@@ -13,22 +13,19 @@ export const ForecastExplorerPage = () => {
   return (
     <div className="space-y-5 p-4 md:p-8">
       <div>
-        <p className="text-primary text-xs tracking-widest uppercase">
-          Version history
-        </p>
-        <h2 className="mt-1 text-2xl font-semibold">Forecast Explorer</h2>
+        <h2 className="mt-1 text-2xl font-semibold">Forecast versions</h2>
         <p className="text-muted-foreground mt-1 text-sm">
-          Inspect all published forecasts and their cutoff eligibility.
+          See which forecast was available when each purchase decision was made.
         </p>
       </div>
-      <FilterBar includeAlignment={false} />
+      <FilterBar />
       <QueryState
         loading={query.isPending}
         error={query.error}
         onRetry={handleRetry}
       />
       {query.data && (
-        <section className="bg-card border p-4">
+        <section className="bg-card rounded-lg border p-4">
           <ForecastVersionTable
             forecasts={query.data}
             interval={filters.interval}

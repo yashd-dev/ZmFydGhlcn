@@ -7,7 +7,7 @@ export const defaults = {
   cutoff: "09:00",
   endDate: "2026-01-31",
   interval: "",
-  startDate: "2026-01-01",
+  startDate: "2026-01-20",
 };
 export const useUrlFilters = () => {
   const search = useSyncExternalStore(
@@ -19,10 +19,11 @@ export const useUrlFilters = () => {
     () => ""
   );
   const params = new URLSearchParams(search);
-  const requestedStart = params.get("start_date") ?? "";
+  const storedStart = window.localStorage.getItem("wind-delivery-date") ?? "";
+  const requestedStart = params.get("start_date") || storedStart;
   const requestedEnd = params.get("end_date") ?? "";
   const startDate =
-    requestedStart >= defaults.startDate && requestedStart <= defaults.endDate
+    requestedStart >= "2026-01-02" && requestedStart <= defaults.endDate
       ? requestedStart
       : defaults.startDate;
   const endDate =
@@ -54,6 +55,9 @@ export const useUrlFilters = () => {
       );
       if (value) {
         next.set(name, value);
+        if (key === "startDate") {
+          window.localStorage.setItem("wind-delivery-date", value);
+        }
       } else {
         next.delete(name);
       }

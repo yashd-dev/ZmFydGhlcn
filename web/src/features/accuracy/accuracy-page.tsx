@@ -1,4 +1,3 @@
-import { ErrorChart } from "@/src/components/charts/error-chart";
 import { ForecastActualChart } from "@/src/components/charts/forecast-actual-chart";
 import { MetricCard } from "@/src/components/metrics/metric-card";
 import { MetricGrid } from "@/src/components/metrics/metric-grid";
@@ -11,7 +10,11 @@ import { FilterBar, QueryState } from "../shared";
 
 export const AccuracyPage = () => {
   const { filters } = useUrlFilters();
-  const query = useAccuracy(filters);
+  const query = useAccuracy({
+    ...filters,
+    endDate: filters.startDate,
+    startDate: `${filters.startDate.slice(0, 7)}-01`,
+  });
   const { data } = query;
   const handleRetry = async () => {
     await query.refetch();
@@ -19,12 +22,12 @@ export const AccuracyPage = () => {
   return (
     <div className="space-y-5 p-4 md:p-8">
       <div>
-        <p className="text-primary text-xs tracking-widest uppercase">
-          Methodology
+        <h2 className="mt-1 text-2xl font-semibold">Forecast accuracy</h2>
+        <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
+          Quantify the error in the forecasts used for day-ahead procurement.
         </p>
-        <h2 className="mt-1 text-2xl font-semibold">Accuracy Analysis</h2>
       </div>
-      <FilterBar />
+      <FilterBar singleDate />
       <QueryState
         loading={query.isPending}
         error={query.error}
@@ -48,31 +51,19 @@ export const AccuracyPage = () => {
               value={metric(data.metrics, "bias")}
               detail="Forecast direction"
             />
-            <MetricCard
-              label="Matched count"
-              value={String(data.metrics.matched_count ?? 0)}
-              detail={`${data.excluded_count} excluded`}
-            />
           </MetricGrid>
-          <div className="bg-muted/30 text-muted-foreground border p-4 text-sm">
-            <p>
-              MAE is average absolute error. RMSE weights larger errors more
-              heavily. Bias indicates overforecasting or underforecasting
-              direction. Historical error is not a calibrated uncertainty
-              interval.
+          <section className="bg-card rounded-lg border p-4">
+            <h3 className="mb-1 font-medium">
+              Forecast versus actual generation
+            </h3>
+            <p className="text-muted-foreground mb-3 text-xs">
+              Hover an interval to see the forecast error.
             </p>
-          </div>
-          <section className="bg-card border p-4">
-            <h3 className="mb-3 font-medium">Error trend</h3>
-            <ErrorChart intervals={data.intervals} />
+            <ForecastActualChart intervals={data.intervals} showError />
           </section>
-          <section className="bg-card border p-4">
-            <h3 className="mb-3 font-medium">Forecast versus actual</h3>
-            <ForecastActualChart intervals={data.intervals} />
-          </section>
-          <section className="bg-card border p-4">
-            <h3 className="mb-3 font-medium">Interval detail</h3>
-            <IntervalTable intervals={data.intervals} />
+          <section className="bg-card rounded-lg border p-4">
+            <h3 className="mb-3 font-medium">Forecast interval detail</h3>
+            <IntervalTable intervals={data.intervals} showActual={false} />
           </section>
         </>
       )}

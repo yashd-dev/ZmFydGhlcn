@@ -7,4 +7,5 @@ export const useAccuracy = (params: AccuracyParams) =>
   useQuery({
     queryFn: ({ signal }) => getAccuracy(params, signal),
     queryKey: ["accuracy", params],
+    refetchOnMount: false,
   });
