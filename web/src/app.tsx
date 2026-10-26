@@ -1,9 +1,17 @@
-import { useSyncExternalStore } from "react";
+import { lazy, Suspense, useSyncExternalStore } from "react";
 
 import { AppProviders } from "./app/app-providers";
 import { DashboardLayout } from "./components/layout/dashboard-layout";
-import { AccuracyPage } from "./features/accuracy/accuracy-page";
-import { OverviewPage } from "./features/overview/overview-page";
+const AccuracyPage = lazy(() =>
+  import("./features/accuracy/accuracy-page").then(({ AccuracyPage }) => ({
+    default: AccuracyPage,
+  }))
+);
+const OverviewPage = lazy(() =>
+  import("./features/overview/overview-page").then(({ OverviewPage }) => ({
+    default: OverviewPage,
+  }))
+);
 
 const App = () => {
   const path = useSyncExternalStore(
@@ -27,7 +35,11 @@ const App = () => {
 
   return (
     <AppProviders>
-      <DashboardLayout>{page}</DashboardLayout>
+      <DashboardLayout>
+        <Suspense fallback={<main className="p-8">Loading…</main>}>
+          {page}
+        </Suspense>
+      </DashboardLayout>
     </AppProviders>
   );
 };

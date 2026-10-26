@@ -1,8 +1,9 @@
 from collections import defaultdict
 from contextlib import contextmanager
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
 from typing import Iterator
+from zoneinfo import ZoneInfo
 
 import psycopg
 from psycopg_pool import ConnectionPool
@@ -40,34 +41,26 @@ class Repository:
     def seed_if_empty(self) -> None:
         from .bmrs import fetch_seed_data
 
+        start = date.fromisoformat(settings.evaluation_from) - timedelta(days=1)
+        end = date.fromisoformat(settings.evaluation_to) + timedelta(days=1)
+        timezone = ZoneInfo(settings.timezone)
+        start_time = datetime.combine(start, time.min, timezone).astimezone(UTC)
+        end_time = datetime.combine(end, time.min, timezone).astimezone(UTC)
         with self.connection() as connection:
             connection.execute(
                 "SELECT pg_advisory_xact_lock(hashtext('wind-intelligence-seed'))"
             )
-            (
-                actual_count,
-                forecast_count,
-                prior_actual_count,
-                prior_forecast_count,
-            ) = connection.execute(
+            expected_hours = int((end_time - start_time).total_seconds() / 3600)
+            expected_actuals = expected_hours * 2
+            actual_count, forecast_hours = connection.execute(
                 """
                 SELECT
-                    (SELECT count(*) FROM actuals),
-                    (SELECT count(*) FROM forecasts),
-                    (SELECT count(*) FROM actuals WHERE settlement_date = %s),
-                    (SELECT count(DISTINCT start_time) FROM forecasts WHERE start_time::date = %s)
+                    (SELECT count(*) FROM actuals WHERE start_time >= %s AND start_time < %s),
+                    (SELECT count(DISTINCT start_time) FROM forecasts WHERE start_time >= %s AND start_time < %s)
                 """,
-                (
-                    date.fromisoformat(settings.evaluation_from) - timedelta(days=1),
-                    date.fromisoformat(settings.evaluation_from) - timedelta(days=1),
-                ),
+                (start_time, end_time, start_time, end_time),
             ).fetchone()
-            if (
-                actual_count
-                and forecast_count
-                and prior_actual_count >= 48
-                and prior_forecast_count >= 24
-            ):
+            if actual_count >= expected_actuals and forecast_hours >= expected_hours:
                 return
             actuals, forecasts = fetch_seed_data()
             with connection.cursor() as cursor:
@@ -106,15 +99,9 @@ class Repository:
                     ],
                 )
 
-    def counts(self) -> tuple[int, int]:
+    def check_connection(self) -> None:
         with self.connection() as connection:
-            actual_count = connection.execute(
-                "SELECT count(*) FROM actuals"
-            ).fetchone()[0]
-            forecast_count = connection.execute(
-                "SELECT count(*) FROM forecasts"
-            ).fetchone()[0]
-        return actual_count, forecast_count
+            connection.execute("SELECT 1")
 
     def actuals_between(self, start: datetime, end: datetime) -> dict[datetime, Actual]:
         with self.connection() as connection:

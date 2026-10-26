@@ -41,13 +41,11 @@ def validate_period(start: date, end: date, *, allow_prior_day: bool = False) ->
 
 @router.get("/health")
 def health() -> dict[str, object]:
-    actual_count, forecast_count = repository.counts()
+    repository.check_connection()
     return {
         "status": "ok",
         "service": "wind-intelligence",
         "database": "postgresql",
-        "actual_count": actual_count,
-        "forecast_count": forecast_count,
     }
 
 
