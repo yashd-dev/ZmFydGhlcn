@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query
@@ -22,10 +22,13 @@ from .services import (
 router = APIRouter(prefix="/api/v1")
 
 
-def validate_period(start: date, end: date) -> None:
+def validate_period(start: date, end: date, *, allow_prior_day: bool = False) -> None:
     configured_start = date.fromisoformat(settings.evaluation_from)
     configured_end = date.fromisoformat(settings.evaluation_to)
-    if start > end or start < configured_start or end > configured_end:
+    minimum_start = (
+        configured_start - timedelta(days=1) if allow_prior_day else configured_start
+    )
+    if start > end or start < minimum_start or end > configured_end:
         raise HTTPException(
             status_code=422,
             detail="date range is outside the configured evaluation period",
@@ -55,7 +58,7 @@ def accuracy(
     cutoff: str = Query(settings.default_cutoff),
     alignment: Literal["hour_mean", "hour_start_point"] = Query("hour_mean"),
 ) -> AccuracyResponse:
-    validate_period(start_date, end_date)
+    validate_period(start_date, end_date, allow_prior_day=True)
     try:
         parse_cutoff(cutoff, start_date)
     except ValueError as exc:

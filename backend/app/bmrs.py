@@ -27,7 +27,7 @@ def fetch_seed_data() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     actuals = _fetch(
         "FUELHH",
         {
-            "settlementDateFrom": start.isoformat(),
+            "settlementDateFrom": (start - timedelta(days=1)).isoformat(),
             "settlementDateTo": (end + timedelta(days=1)).isoformat(),
             "fuelType": "WIND",
         },
