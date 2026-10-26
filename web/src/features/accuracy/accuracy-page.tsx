@@ -9,6 +9,36 @@ import type { Interval } from "@/src/types/api";
 
 import { EvaluateThroughField, QueryState } from "../shared";
 
+const londonTime = (date: string, hour: number) => {
+  const target = `${date}T${String(hour).padStart(2, "0")}:00:00`;
+  let timestamp = Date.parse(`${target}Z`);
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    hour: "2-digit",
+    hourCycle: "h23",
+    minute: "2-digit",
+    month: "2-digit",
+    second: "2-digit",
+    timeZone: "Europe/London",
+    year: "numeric",
+  });
+  for (let i = 0; i < 2; i += 1) {
+    const parts = Object.fromEntries(
+      formatter.formatToParts(timestamp).map(({ type, value }) => [type, value])
+    );
+    const local = Date.UTC(
+      Number(parts.year),
+      Number(parts.month) - 1,
+      Number(parts.day),
+      Number(parts.hour),
+      Number(parts.minute),
+      Number(parts.second)
+    );
+    timestamp += Date.parse(`${target}Z`) - local;
+  }
+  return timestamp;
+};
+
 export const AccuracyPage = () => {
   const [dayView, setDayView] = useState(true);
   const { filters, setFilters } = useUrlFilters();
@@ -56,6 +86,12 @@ export const AccuracyPage = () => {
   const periodLabel = data
     ? `Evaluating ${formatUkDate(`${data.period.start_date}T12:00:00Z`)} - ${formatUkDate(`${data.period.end_date}T12:00:00Z`)}`
     : "";
+  const chartEndDate = new Date(`${filters.endDate}T12:00:00Z`);
+  chartEndDate.setUTCDate(chartEndDate.getUTCDate() - 1);
+  const chartEnd = londonTime(chartEndDate.toISOString().slice(0, 10), 9);
+  const chartIntervals = data?.intervals.filter(
+    (interval) => Date.parse(interval.start_time) <= chartEnd
+  ) ?? [];
   const handleRetry = async () => {
     await query.refetch();
   };
@@ -138,7 +174,8 @@ export const AccuracyPage = () => {
                   </h2>
                   <p className="text-muted-foreground mt-1 text-sm">
                     Actual generation is only used retrospectively to calculate
-                    error. MW.
+                    error. MW. Showing delivery intervals through 09:00 UK time
+                    on the day before the selected end date.
                   </p>
                 </div>
                 <div className="text-muted-foreground flex gap-4 text-sm">
@@ -154,7 +191,7 @@ export const AccuracyPage = () => {
               </div>
               <div className="bg-card rounded-2xl p-4 shadow-sm ring-1 ring-black/10 sm:px-5">
                 <ForecastActualChart
-                  intervals={data.intervals}
+                  intervals={chartIntervals}
                   showError
                   showLegend={false}
                   dateOnly
