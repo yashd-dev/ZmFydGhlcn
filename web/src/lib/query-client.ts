@@ -7,6 +7,7 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       retry: (count, error) =>
         count < 2 &&
+        !(error instanceof Error && error.name === "TimeoutError") &&
         !(
           error instanceof Error &&
           "status" in error &&

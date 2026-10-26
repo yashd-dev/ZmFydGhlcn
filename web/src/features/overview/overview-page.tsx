@@ -215,7 +215,8 @@ export const OverviewPage = () => {
                   </span>
                 </dd>
                 <p className="text-muted-foreground mt-1 text-sm">
-                  Positive means wind was overestimated.
+                  error = forecast - actual. Positive error means the forecast
+                  overestimated wind, so actual wind was lower than expected.
                 </p>
               </div>
             </dl>
@@ -243,7 +244,7 @@ export const OverviewPage = () => {
                 using forecasts published by {filters.cutoff} UK time on the
                 previous day.
                 <br />
-                Average forecast power: {" "}
+                Average forecast power:{" "}
                 <strong className="text-foreground font-semibold">
                   {formatMwWhole(averageForecast)} MW
                 </strong>

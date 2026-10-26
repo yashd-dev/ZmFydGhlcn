@@ -16,7 +16,9 @@ export const getJson = async <T>(
 ): Promise<T> => {
   const search = new URLSearchParams(params);
   const url = `${baseUrl}${path}?${search}`;
-  const response = await fetch(url, { signal });
+  const timeout = AbortSignal.timeout(20_000);
+  const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
+  const response = await fetch(url, { signal: requestSignal });
   if (!response.ok) {
     let message = "The Wind Intelligence API could not complete this request.";
     try {

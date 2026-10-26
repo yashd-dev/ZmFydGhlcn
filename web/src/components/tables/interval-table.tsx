@@ -34,7 +34,9 @@ export const IntervalTable = ({
             <th className="text-right">Forecast publication time, UK time</th>
           )}
           {showActual && <th className="text-right">Actual</th>}
-          {showActual && <th className="text-right">Error</th>}
+          {showActual && (
+            <th className="text-right">Error (forecast - actual)</th>
+          )}
         </tr>
       </thead>
       <tbody>

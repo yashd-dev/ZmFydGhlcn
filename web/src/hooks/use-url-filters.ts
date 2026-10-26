@@ -51,28 +51,31 @@ export const useUrlFilters = () => {
     interval: params.get("interval") ?? defaults.interval,
     startDate,
   };
-  const setFilters = useCallback((updates: Partial<typeof filters>) => {
-    const next = new URLSearchParams(window.location.search);
-    for (const [key, value] of Object.entries(updates)) {
-      const name = key.replaceAll(
-        /[A-Z]/gu,
-        (char) => `_${char.toLowerCase()}`
-      );
-      if (value) {
-        next.set(name, value);
-        if (key === "startDate") {
-          try {
-            window.localStorage.setItem("wind-delivery-date", value);
-          } catch {
-            // Storage can be blocked by the browser.
+  const setFilters = useCallback(
+    (updates: Partial<typeof filters>, persistDeliveryDate = true) => {
+      const next = new URLSearchParams(window.location.search);
+      for (const [key, value] of Object.entries(updates)) {
+        const name = key.replaceAll(
+          /[A-Z]/gu,
+          (char) => `_${char.toLowerCase()}`
+        );
+        if (value) {
+          next.set(name, value);
+          if (key === "startDate" && persistDeliveryDate) {
+            try {
+              window.localStorage.setItem("wind-delivery-date", value);
+            } catch {
+              // Storage can be blocked by the browser.
+            }
           }
+        } else {
+          next.delete(name);
         }
-      } else {
-        next.delete(name);
       }
-    }
-    window.history.pushState({}, "", `${window.location.pathname}?${next}`);
-    window.dispatchEvent(new PopStateEvent("popstate"));
-  }, []);
+      window.history.pushState({}, "", `${window.location.pathname}?${next}`);
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    },
+    []
+  );
   return { filters, setFilters };
 };

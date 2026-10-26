@@ -58,6 +58,40 @@ export const FilterBar = ({ singleDate = false }: { singleDate?: boolean }) => {
   );
 };
 
+export const EvaluateThroughField = () => {
+  const { filters, setFilters } = useUrlFilters();
+  return (
+    <form
+      className="mt-6 flex flex-wrap items-end gap-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+        const endDate = String(
+          new FormData(event.currentTarget).get("end_date")
+        );
+        setFilters({ endDate, startDate: "2026-01-02" }, false);
+      }}
+    >
+      <label className="text-muted-foreground grid gap-1 text-xs font-medium">
+        Evaluate through
+        <Input
+          name="end_date"
+          type="date"
+          defaultValue={filters.endDate}
+          min="2026-01-02"
+          max="2026-02-01"
+        />
+      </label>
+      <div className="text-muted-foreground grid gap-1 pb-2 text-sm">
+        Assumed decision time (demo)
+        <span className="text-foreground text-sm">
+          {filters.cutoff} Europe/London
+        </span>
+      </div>
+      <Button type="submit">Apply filters</Button>
+    </form>
+  );
+};
+
 export const DeliveryDateField = () => {
   const { filters, setFilters } = useUrlFilters();
   return (
