@@ -6,7 +6,7 @@ export const FilterBar = ({ singleDate = false }: { singleDate?: boolean }) => {
   const { filters, setFilters } = useUrlFilters();
   return (
     <form
-      className="bg-card flex flex-wrap items-end gap-3 rounded-lg border p-3"
+      className="bg-card flex flex-wrap items-end gap-3 rounded-2xl p-4 shadow-sm ring-1 ring-black/10"
       onSubmit={(event) => {
         event.preventDefault();
         const form = new FormData(event.currentTarget);

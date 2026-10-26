@@ -91,7 +91,7 @@ export const AccuracyPage = () => {
               detail="Forecast direction"
             />
           </MetricGrid>
-          <section className="bg-card rounded-lg border p-4">
+          <section className="bg-card rounded-2xl p-5 shadow-sm ring-1 ring-black/10">
             <h3 className="mb-1 font-medium">
               Forecast versus actual generation
             </h3>
@@ -100,13 +100,13 @@ export const AccuracyPage = () => {
             </p>
             <ForecastActualChart intervals={data.intervals} showError />
           </section>
-          <section className="bg-card rounded-lg border p-4">
+          <section className="bg-card rounded-2xl p-5 shadow-sm ring-1 ring-black/10">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h3 className="font-medium">Forecast interval detail</h3>
-              <div className="bg-muted flex rounded-full p-1">
+              <div className="bg-muted flex rounded-xl p-1">
                 <button
                   aria-pressed={!dayView}
-                  className={`rounded-full px-3 py-1.5 text-xs ${dayView ? "text-muted-foreground" : "bg-background font-medium shadow-sm"}`}
+                  className={`rounded-lg px-3 py-1.5 text-xs ${dayView ? "text-muted-foreground" : "bg-background text-primary font-medium shadow-sm"}`}
                   onClick={() => setDayView(false)}
                   type="button"
                 >
@@ -114,7 +114,7 @@ export const AccuracyPage = () => {
                 </button>
                 <button
                   aria-pressed={dayView}
-                  className={`rounded-full px-3 py-1.5 text-xs ${dayView ? "bg-background font-medium shadow-sm" : "text-muted-foreground"}`}
+                  className={`rounded-lg px-3 py-1.5 text-xs ${dayView ? "bg-background text-primary font-medium shadow-sm" : "text-muted-foreground"}`}
                   onClick={() => setDayView(true)}
                   type="button"
                 >

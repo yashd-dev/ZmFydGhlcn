@@ -10,16 +10,20 @@ export const MetricCard = ({
   featured?: boolean;
 }) => (
   <section
-    className={`rounded-lg border p-4 ${featured ? "border-primary bg-primary text-primary-foreground" : "bg-card"}`}
+    className={`rounded-2xl p-5 shadow-sm ring-1 ring-black/10 ${featured ? "bg-[linear-gradient(to_bottom,var(--acet-tertiary),var(--acet-primary))] text-white shadow-md" : "bg-card"}`}
   >
     <p
-      className={`${featured ? "text-primary-foreground" : "text-muted-foreground"} text-xs tracking-wider uppercase`}
+      className={`${featured ? "text-white/80" : "text-muted-foreground"} text-sm leading-5`}
     >
       {label}
     </p>
-    <p className="mt-3 text-2xl font-semibold tracking-tight">{value}</p>
     <p
-      className={`${featured ? "text-primary-foreground/80" : "text-muted-foreground"} mt-2 text-xs`}
+      className={`${featured ? "text-white" : "text-foreground"} mt-2 text-3xl font-bold tracking-tight`}
+    >
+      {value}
+    </p>
+    <p
+      className={`${featured ? "text-white/80" : "text-muted-foreground"} mt-2 text-sm`}
     >
       {detail}
     </p>
