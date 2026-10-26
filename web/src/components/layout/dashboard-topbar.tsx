@@ -16,7 +16,7 @@ export const DashboardTopbar = () => {
   );
   const activeIndex = pathname.startsWith("/accuracy") ? 1 : 0;
   return (
-    <header className="flex shrink-0 items-center justify-end px-4 py-4 md:px-8">
+    <header className="flex shrink-0 items-center justify-center px-4 py-4 md:px-8">
       <nav
         aria-label="Primary"
         className="bg-background/90 relative grid w-fit grid-cols-2 rounded-full border p-1 shadow-sm backdrop-blur"
@@ -39,7 +39,11 @@ export const DashboardTopbar = () => {
                 if (window.location.pathname === href) {
                   return;
                 }
-                window.history.pushState({}, "", href);
+                window.history.pushState(
+                  {},
+                  "",
+                  `${href}${window.location.search}`
+                );
                 window.dispatchEvent(new PopStateEvent("popstate"));
               }}
             >

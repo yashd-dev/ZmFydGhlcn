@@ -14,5 +14,12 @@ export const formatUk = (value: string | null | undefined) =>
         timeZone: "Europe/London",
       }).format(new Date(value))
     : "N/A";
+export const formatUkDate = (value: string | null | undefined) =>
+  value
+    ? new Intl.DateTimeFormat("en-GB", {
+        dateStyle: "medium",
+        timeZone: "Europe/London",
+      }).format(new Date(value))
+    : "N/A";
 export const metric = (values: Record<string, number | null>, key: string) =>
   formatMw(values[key]);
