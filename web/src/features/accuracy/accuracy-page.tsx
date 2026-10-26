@@ -97,7 +97,7 @@ export const AccuracyPage = () => {
                   {formatMw(data.metrics.mae)}
                 </dd>
                 <p className="text-muted-foreground mt-1 text-sm">
-                  Average absolute error.
+                  Typical miss in either direction.
                 </p>
               </div>
               <div>
@@ -119,8 +119,8 @@ export const AccuracyPage = () => {
                   {formatSignedMw(data.metrics.bias)}
                 </dd>
                 <p className="text-muted-foreground mt-1 text-sm">
-                  error = forecast - actual. Positive error means the forecast
-                  overestimated wind, so actual wind was lower than expected.
+                  Positive bias indicates overprediction; negative bias
+                  indicates underprediction.
                 </p>
               </div>
             </dl>
@@ -167,7 +167,9 @@ export const AccuracyPage = () => {
                 <div>
                   <h2 className="font-semibold">Forecast interval detail</h2>
                   <p className="text-muted-foreground mt-1 text-sm">
-                    {dailyIntervals.length} daily averages · {periodLabel}
+                    {dayView
+                      ? `${dailyIntervals.length} daily averages`
+                      : `${data.intervals.length} hourly intervals`} · {periodLabel}
                   </p>
                 </div>
                 <div className="bg-muted flex rounded-xl p-1">

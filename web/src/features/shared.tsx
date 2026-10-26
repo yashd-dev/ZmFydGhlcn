@@ -82,7 +82,7 @@ export const EvaluateThroughField = () => {
         />
       </label>
       <div className="text-muted-foreground grid gap-1 pb-2 text-sm">
-        Assumed decision time (demo)
+        Assumed decision time
         <span className="text-foreground text-sm">
           {filters.cutoff} Europe/London
         </span>

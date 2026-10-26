@@ -21,12 +21,14 @@ export const ChartTooltip = ({
         </div>
       ))}
       {showError && typeof payload[0]?.payload?.error === "number" && (
-        <div>
-          <div>
-            error = forecast - actual. Positive error means the forecast
-            overestimated wind, so actual wind was lower than expected.
-          </div>
-          <div>Value: {Number(payload[0]?.payload?.error).toFixed(2)} MW</div>
+        <div
+          className={
+            payload[0].payload.error >= 0
+              ? "text-chart-4"
+              : "text-destructive"
+          }
+        >
+          Error: {Number(payload[0].payload.error).toFixed(2)} MW
         </div>
       )}
     </div>
