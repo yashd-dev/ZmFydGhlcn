@@ -6,7 +6,7 @@ export const FilterBar = ({ singleDate = false }: { singleDate?: boolean }) => {
   const { filters, setFilters } = useUrlFilters();
   return (
     <form
-      className="bg-card flex flex-wrap items-end gap-3 rounded-2xl p-4 shadow-sm ring-1 ring-black/10"
+      className="mt-6 flex flex-wrap items-end gap-4"
       onSubmit={(event) => {
         event.preventDefault();
         const form = new FormData(event.currentTarget);
@@ -21,7 +21,7 @@ export const FilterBar = ({ singleDate = false }: { singleDate?: boolean }) => {
       }}
     >
       {singleDate ? (
-        <label className="text-muted-foreground grid gap-1 text-xs">
+        <label className="text-muted-foreground grid gap-1 text-xs font-medium">
           Delivery date
           <Input
             name="delivery_date"
@@ -33,7 +33,7 @@ export const FilterBar = ({ singleDate = false }: { singleDate?: boolean }) => {
         </label>
       ) : (
         <>
-          <label className="text-muted-foreground grid gap-1 text-xs">
+          <label className="text-muted-foreground grid gap-1 text-xs font-medium">
             Start date
             <Input
               name="start_date"
@@ -41,13 +41,13 @@ export const FilterBar = ({ singleDate = false }: { singleDate?: boolean }) => {
               defaultValue={filters.startDate}
             />
           </label>
-          <label className="text-muted-foreground grid gap-1 text-xs">
+          <label className="text-muted-foreground grid gap-1 text-xs font-medium">
             End date
             <Input name="end_date" type="date" defaultValue={filters.endDate} />
           </label>
         </>
       )}
-      <div className="text-muted-foreground grid gap-1 text-xs">
+      <div className="text-muted-foreground grid gap-1 pb-2 text-sm">
         Decision cutoff
         <span className="text-foreground text-sm">
           {filters.cutoff} Europe/London
@@ -55,6 +55,28 @@ export const FilterBar = ({ singleDate = false }: { singleDate?: boolean }) => {
       </div>
       <Button type="submit">Apply filters</Button>
     </form>
+  );
+};
+
+export const DeliveryDateField = () => {
+  const { filters, setFilters } = useUrlFilters();
+  return (
+    <label className="text-muted-foreground grid gap-1 text-sm">
+      Delivery date
+      <Input
+        name="delivery_date"
+        type="date"
+        defaultValue={filters.startDate}
+        min="2026-01-02"
+        max="2026-02-01"
+        onChange={(event) =>
+          setFilters({
+            endDate: event.currentTarget.value,
+            startDate: event.currentTarget.value,
+          })
+        }
+      />
+    </label>
   );
 };
 export const QueryState = ({
@@ -72,7 +94,10 @@ export const QueryState = ({
         <span className="sr-only">Loading analytical data...</span>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {["one", "two", "three", "four"].map((key) => (
-            <div className="bg-card space-y-4 rounded-lg border p-5" key={key}>
+            <div
+              className="bg-card space-y-4 rounded-2xl p-5 shadow-sm ring-1 ring-black/10"
+              key={key}
+            >
               <div className="bg-muted h-3 w-28 animate-pulse rounded" />
               <div className="bg-muted h-8 w-24 animate-pulse rounded" />
               <div className="bg-muted h-3 w-40 animate-pulse rounded" />
@@ -82,14 +107,14 @@ export const QueryState = ({
         <div className="grid gap-5 lg:grid-cols-2">
           {["chart", "comparison"].map((key) => (
             <div
-              className="bg-card min-h-[30rem] space-y-5 rounded-lg border p-5"
+              className="bg-card space-y-5 rounded-2xl p-5 shadow-sm ring-1 ring-black/10"
               key={key}
             >
               <div className="space-y-3">
                 <div className="bg-muted h-4 w-48 animate-pulse rounded" />
                 <div className="bg-muted h-3 w-64 animate-pulse rounded" />
               </div>
-              <div className="bg-muted/60 h-[23rem] animate-pulse rounded-md" />
+              <div className="bg-muted/60 h-[13rem] animate-pulse rounded-md sm:h-[16rem]" />
             </div>
           ))}
         </div>

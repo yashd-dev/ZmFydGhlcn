@@ -20,23 +20,27 @@ export const ForecastActualChart = ({
   forecastName = "Forecast",
   showError = false,
   showLegend = true,
+  className = "h-96",
+  dateOnly = false,
 }: {
   intervals: Interval[];
   showActual?: boolean;
   forecastName?: string;
   showError?: boolean;
   showLegend?: boolean;
+  className?: string;
+  dateOnly?: boolean;
 }) => {
   const data = intervals
     .map((item) => ({
       actual: showActual ? item.actual_mw : null,
       error: item.error_mw,
       forecast: item.forecast_mw,
-      label: formatUk(item.start_time),
+      label: dateOnly ? item.start_time : formatUk(item.start_time),
     }))
     .filter((item) => item.forecast !== null || item.actual !== null);
   return (
-    <div className="h-96 w-full">
+    <div className={`${className} w-full`}>
       {data.length ? (
         <ResponsiveContainer>
           <LineChart
@@ -44,8 +48,26 @@ export const ForecastActualChart = ({
             margin={{ bottom: 8, left: 0, right: 8, top: 8 }}
           >
             <CartesianGrid className="stroke-border [stroke-dasharray:2_3]" />
-            <XAxis dataKey="label" minTickGap={45} tick={{ fontSize: 10 }} />
-            <YAxis tick={{ fontSize: 10 }} unit=" MW" />
+            <XAxis
+              dataKey="label"
+              interval="preserveStartEnd"
+              minTickGap={45}
+              tick={{ fontSize: dateOnly ? 11 : 10 }}
+              tickFormatter={(value: string) =>
+                dateOnly
+                  ? new Intl.DateTimeFormat("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      timeZone: "Europe/London",
+                    }).format(new Date(value))
+                  : value
+              }
+            />
+            <YAxis
+              ticks={[0, 5000, 10_000, 15_000, 20_000]}
+              tick={{ fontSize: 10 }}
+              tickFormatter={(value: number) => `${Math.round(value / 1000)}k`}
+            />
             <Tooltip content={<ChartTooltip showError={showError} />} />
             {showActual && showLegend && <Legend />}
             <Line
@@ -63,7 +85,7 @@ export const ForecastActualChart = ({
                 type="monotone"
                 dataKey="actual"
                 name="Actual"
-                stroke="var(--primary)"
+                stroke="var(--actual-line)"
                 strokeWidth={2}
                 dot={false}
                 connectNulls={false}

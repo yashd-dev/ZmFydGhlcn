@@ -1,12 +1,10 @@
 import { useState } from "react";
 
 import { ForecastActualChart } from "@/src/components/charts/forecast-actual-chart";
-import { MetricCard } from "@/src/components/metrics/metric-card";
-import { MetricGrid } from "@/src/components/metrics/metric-grid";
 import { IntervalTable } from "@/src/components/tables/interval-table";
 import { useAccuracy } from "@/src/hooks/use-accuracy";
 import { useUrlFilters } from "@/src/hooks/use-url-filters";
-import { metric } from "@/src/lib/formatters";
+import { formatMw, formatSignedMw, formatUkDate } from "@/src/lib/formatters";
 import type { Interval } from "@/src/types/api";
 
 import { FilterBar, QueryState } from "../shared";
@@ -53,13 +51,18 @@ export const AccuracyPage = () => {
       });
     }
   }
+  const periodLabel = data
+    ? `${dailyIntervals.length} daily averages, ${formatUkDate(`${data.period.start_date}T12:00:00Z`)}-${formatUkDate(`${data.period.end_date}T12:00:00Z`)}`
+    : "";
   const handleRetry = async () => {
     await query.refetch();
   };
   return (
-    <div className="space-y-5 p-4 md:p-8">
+    <main className="space-y-8 px-4 pt-8 pb-16 sm:px-8">
       <div>
-        <h2 className="mt-1 text-2xl font-semibold">Forecast accuracy</h2>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Forecast accuracy
+        </h1>
         <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
           Retrospective accuracy of forecasts available at the decision cutoff.
           Actuals are shown here for evaluation, not as decision-time
@@ -74,35 +77,81 @@ export const AccuracyPage = () => {
       />
       {data && (
         <>
-          <MetricGrid>
-            <MetricCard
-              label="MAE"
-              value={metric(data.metrics, "mae")}
-              detail="Average absolute error"
-            />
-            <MetricCard
-              label="RMSE"
-              value={metric(data.metrics, "rmse")}
-              detail="Weights larger errors more"
-            />
-            <MetricCard
-              label="Bias"
-              value={metric(data.metrics, "bias")}
-              detail="Forecast direction"
-            />
-          </MetricGrid>
-          <section className="bg-card rounded-2xl p-5 shadow-sm ring-1 ring-black/10">
-            <h3 className="mb-1 font-medium">
-              Forecast versus actual generation
-            </h3>
-            <p className="text-muted-foreground mb-3 text-xs">
-              Actual generation is only used retrospectively to calculate error.
-            </p>
-            <ForecastActualChart intervals={data.intervals} showError />
+          <dl className="grid border-y py-5 sm:grid-cols-3 sm:gap-0 [&>div]:py-3 [&>div]:sm:border-l [&>div]:sm:px-7 [&>div:first-child]:sm:border-0 [&>div:first-child]:sm:pl-0">
+            <div>
+              <dt className="text-muted-foreground text-sm font-semibold">
+                Mean absolute error
+              </dt>
+              <dd className="mt-1.5 text-2xl font-semibold tabular-nums">
+                {formatMw(data.metrics.mae)}
+              </dd>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Average absolute error.
+              </p>
+            </div>
+            <div>
+              <dt className="text-muted-foreground text-sm font-semibold">
+                Root mean squared error
+              </dt>
+              <dd className="mt-1.5 text-2xl font-semibold tabular-nums">
+                {formatMw(data.metrics.rmse)}
+              </dd>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Larger misses count more.
+              </p>
+            </div>
+            <div>
+              <dt className="text-muted-foreground text-sm font-semibold">
+                Bias
+              </dt>
+              <dd className="mt-1.5 text-2xl font-semibold tabular-nums">
+                {formatSignedMw(data.metrics.bias)}
+              </dd>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Forecast direction.
+              </p>
+            </div>
+          </dl>
+          <section>
+            <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="font-semibold">
+                  Forecast versus actual generation
+                </h2>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Actual generation is only used retrospectively to calculate
+                  error. MW.
+                </p>
+              </div>
+              <div className="text-muted-foreground flex gap-4 text-sm">
+                <span className="flex items-center gap-2">
+                  <span className="border-primary w-5 border-t-2 border-dashed" />
+                  Forecast
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="border-actual-line w-5 border-t-2" />
+                  Actual
+                </span>
+              </div>
+            </div>
+            <div className="bg-card rounded-2xl p-4 shadow-sm ring-1 ring-black/10 sm:px-5">
+              <ForecastActualChart
+                intervals={data.intervals}
+                showError
+                showLegend={false}
+                dateOnly
+                className="h-[220px] sm:h-[260px]"
+              />
+            </div>
           </section>
-          <section className="bg-card rounded-2xl p-5 shadow-sm ring-1 ring-black/10">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h3 className="font-medium">Forecast interval detail</h3>
+          <section>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="font-semibold">Forecast interval detail</h2>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  {periodLabel}
+                </p>
+              </div>
               <div className="bg-muted flex rounded-xl p-1">
                 <button
                   aria-pressed={!dayView}
@@ -122,13 +171,15 @@ export const AccuracyPage = () => {
                 </button>
               </div>
             </div>
-            <IntervalTable
-              dayView={dayView}
-              intervals={dayView ? dailyIntervals : data.intervals}
-            />
+            <div className="bg-card rounded-2xl shadow-sm ring-1 ring-black/10">
+              <IntervalTable
+                dayView={dayView}
+                intervals={dayView ? dailyIntervals : data.intervals}
+              />
+            </div>
           </section>
         </>
       )}
-    </div>
+    </main>
   );
 };

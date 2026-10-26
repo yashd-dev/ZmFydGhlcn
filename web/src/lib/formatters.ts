@@ -1,7 +1,15 @@
 export const formatMw = (value: number | null | undefined) =>
   value === null || value === undefined || Number.isNaN(value)
     ? "N/A"
-    : `${value.toFixed(2)} MW`;
+    : `${value.toLocaleString("en-GB", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} MW`;
+export const formatSignedMw = (value: number | null | undefined) =>
+  value === null || value === undefined || Number.isNaN(value)
+    ? "N/A"
+    : `${value > 0 ? "+" : ""}${value.toLocaleString("en-GB", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} MW`;
+export const formatMwWhole = (value: number | null | undefined) =>
+  value === null || value === undefined || Number.isNaN(value)
+    ? "N/A"
+    : Math.round(value).toLocaleString("en-GB");
 export const formatUtc = (value: string | null | undefined) =>
   value
     ? `${new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(new Date(value))} UTC`

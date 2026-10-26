@@ -1,16 +1,14 @@
 import { useState } from "react";
 
 import { ForecastActualChart } from "@/src/components/charts/forecast-actual-chart";
-import { MetricCard } from "@/src/components/metrics/metric-card";
-import { MetricGrid } from "@/src/components/metrics/metric-grid";
 import { IntervalTable } from "@/src/components/tables/interval-table";
 import { useAccuracy } from "@/src/hooks/use-accuracy";
 import { useForecasts } from "@/src/hooks/use-forecasts";
 import { useUrlFilters } from "@/src/hooks/use-url-filters";
-import { formatMw, metric } from "@/src/lib/formatters";
+import { formatMwWhole } from "@/src/lib/formatters";
 import type { Forecast, Interval } from "@/src/types/api";
 
-import { FilterBar, QueryState } from "../shared";
+import { DeliveryDateField, QueryState } from "../shared";
 
 export const OverviewPage = () => {
   const { filters } = useUrlFilters();
@@ -50,64 +48,59 @@ export const OverviewPage = () => {
   );
   const loading = forecastPending || historyPending;
   const error = forecastError ?? historyError;
+  const deliveryDateLabel = new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    timeZone: "Europe/London",
+  }).format(new Date(`${filters.startDate}T12:00:00`));
+  const averageForecast = forecastIntervals.length
+    ? forecastIntervals.reduce(
+        (sum, interval) => sum + (interval.forecast_mw ?? 0),
+        0
+      ) / forecastIntervals.length
+    : null;
   const handleRetry = async () => {
     await Promise.all([forecastQuery.refetch(), historyQuery.refetch()]);
   };
   return (
-    <div className="space-y-5 p-4 md:p-8">
-      <div>
-        <h2 className="mt-1 text-2xl font-semibold">
-          Decision-time wind forecast
-        </h2>
-        <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
-          Select a delivery date to see the latest forecast available by the
-          09:00 Europe/London decision cutoff. This is the raw forecast, not a
-          hindsight-adjusted estimate.
-        </p>
+    <main className="space-y-10 px-4 pt-8 pb-16 sm:px-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Decision-time wind forecast
+          </h1>
+          <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
+            Select a delivery date to see the latest forecast available
+          </p>
+        </div>
+        <DeliveryDateField />
       </div>
-      <FilterBar singleDate />
       <QueryState loading={loading} error={error} onRetry={handleRetry} />
       {data && (
         <>
-          <MetricGrid>
-            <MetricCard
-              label="Decision-time forecast"
-              value={
-                forecastIntervals.length
-                  ? formatMw(
-                      forecastIntervals.reduce(
-                        (sum, interval) => sum + (interval.forecast_mw ?? 0),
-                        0
-                      ) / forecastIntervals.length
-                    )
-                  : "N/A"
-              }
-              detail="Average MW from forecasts available at the cutoff"
-              featured
-            />
-            <MetricCard
-              label="Retrospective MAE"
-              value={metric(data.metrics, "mae")}
-              detail="Typical miss in either direction"
-            />
-            <MetricCard
-              label="Retrospective RMSE"
-              value={metric(data.metrics, "rmse")}
-              detail="Root mean squared error; larger misses count more"
-            />
-            <MetricCard
-              label="Retrospective bias"
-              value={metric(data.metrics, "bias")}
-              detail="Positive means wind was overestimated"
-            />
-          </MetricGrid>
-          <div className="grid gap-5 lg:grid-cols-2">
-            <section className="bg-card flex min-h-[30rem] flex-col rounded-2xl p-5 shadow-sm ring-1 ring-black/10">
+          <section className="grid gap-8 lg:grid-cols-[300px_1fr] lg:gap-12">
+            <div
+              className={`flex flex-col justify-center ${view === "table" ? "lg:sticky lg:top-20 lg:self-start" : ""}`}
+            >
+              <p className="text-muted-foreground text-sm">
+                Average forecast, {deliveryDateLabel}
+              </p>
+              <p className="text-foreground mt-3 text-5xl font-semibold tracking-tight lg:text-[56px]">
+                {formatMwWhole(averageForecast)}
+                <span className="text-muted-foreground ml-1 text-xl font-medium">
+                  MW
+                </span>
+              </p>
+              <p className="text-muted-foreground mt-3 max-w-[26ch] text-sm">
+                Latest forecast published before the decision cutoff.
+              </p>
+            </div>
+            <section className="bg-card rounded-2xl p-4 shadow-sm ring-1 ring-black/10 sm:px-5">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h3 className="font-medium">Decision-time forecast</h3>
                   <p className="text-muted-foreground text-xs">
-                    Latest forecast published by the 09:00 Europe/London cutoff.
+                    Hourly generation (MW)
                   </p>
                 </div>
                 <div className="bg-muted flex rounded-xl p-1">
@@ -132,6 +125,7 @@ export const OverviewPage = () => {
                   intervals={forecastIntervals}
                   showActual={false}
                   forecastName="Forecast available at cutoff"
+                  className="h-[200px] sm:h-[260px]"
                 />
               ) : (
                 <IntervalTable
@@ -141,23 +135,79 @@ export const OverviewPage = () => {
                 />
               )}
             </section>
-            <section className="bg-card min-h-[30rem] rounded-2xl p-5 shadow-sm ring-1 ring-black/10">
+          </section>
+          <section className="border-border border-t pt-8">
+            <div className="flex items-baseline justify-between gap-4">
+              <h2 className="text-lg font-semibold">How accurate was it?</h2>
+              <a
+                className="text-primary shrink-0 text-sm font-medium underline-offset-4 hover:underline"
+                href="/accuracy"
+              >
+                View full accuracy
+              </a>
+            </div>
+            <p className="text-muted-foreground mt-1.5 text-sm">
+              Uses actual generation, so it was not available at decision time.
+              Window: 1-{deliveryDateLabel}.
+            </p>
+            <dl className="my-6 grid gap-5 sm:grid-cols-3 sm:gap-0 [&>div]:sm:border-l [&>div]:sm:px-8 [&>div:first-child]:sm:border-0 [&>div:first-child]:sm:pl-0">
+              <div>
+                <dt className="text-muted-foreground text-sm">
+                  Mean absolute error
+                </dt>
+                <dd className="mt-1 text-2xl font-semibold">
+                  {formatMwWhole(data.metrics.mae)}{" "}
+                  <span className="text-muted-foreground text-sm font-medium">
+                    MW
+                  </span>
+                </dd>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Typical miss in either direction.
+                </p>
+              </div>
+              <div>
+                <dt className="text-muted-foreground text-sm">
+                  Root mean squared error
+                </dt>
+                <dd className="mt-1 text-2xl font-semibold">
+                  {formatMwWhole(data.metrics.rmse)}{" "}
+                  <span className="text-muted-foreground text-sm font-medium">
+                    MW
+                  </span>
+                </dd>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Larger misses count more.
+                </p>
+              </div>
+              <div>
+                <dt className="text-muted-foreground text-sm">Bias</dt>
+                <dd className="mt-1 text-2xl font-semibold">
+                  {formatMwWhole(data.metrics.bias)}{" "}
+                  <span className="text-muted-foreground text-sm font-medium">
+                    MW
+                  </span>
+                </dd>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Positive means wind was overestimated.
+                </p>
+              </div>
+            </dl>
+            <section className="bg-card rounded-2xl p-4 shadow-sm ring-1 ring-black/10 sm:px-5">
               <h3 className="mb-1 font-medium">
                 Forecast versus actual generation
               </h3>
               <p className="text-muted-foreground mb-3 text-xs">
-                Retrospective comparison using actual generation for the
-                selected delivery period.
+                Retrospective hourly generation (MW).
               </p>
               <ForecastActualChart
                 intervals={data.intervals}
                 showError
-                showLegend={false}
+                className="h-[200px] sm:h-[260px]"
               />
             </section>
-          </div>
+          </section>
         </>
       )}
-    </div>
+    </main>
   );
 };

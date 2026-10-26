@@ -1,4 +1,9 @@
-import { formatMw, formatUk, formatUkDate } from "@/src/lib/formatters";
+import {
+  formatMw,
+  formatSignedMw,
+  formatUk,
+  formatUkDate,
+} from "@/src/lib/formatters";
 import type { Interval } from "@/src/types/api";
 
 export const IntervalTable = ({
@@ -13,18 +18,16 @@ export const IntervalTable = ({
   dayView?: boolean;
 }) => (
   <div className="overflow-x-auto">
-    <table className="[&_td]:border-border [&_th]:border-border [&_th]:text-muted-foreground w-full border-collapse text-[0.8rem] [&_td]:border-b [&_td]:px-3 [&_td]:py-2.5 [&_td]:whitespace-nowrap [&_th]:border-b [&_th]:px-3 [&_th]:py-2.5 [&_th]:text-left [&_th]:font-medium [&_th]:whitespace-nowrap">
+    <table className="[&_td]:border-border [&_th]:border-border [&_th]:bg-card w-full min-w-[520px] border-collapse text-[0.8rem] tabular-nums [&_td]:border-b [&_td]:px-5 [&_td]:py-2 [&_td]:whitespace-nowrap [&_th]:sticky [&_th]:top-0 [&_th]:border-b [&_th]:px-5 [&_th]:py-2 [&_th]:font-medium [&_th]:whitespace-nowrap">
       <caption className="sr-only">
         {showActual ? "Evaluation interval comparisons" : "Forecast intervals"}
       </caption>
       <thead>
         <tr>
-          <th>Delivery (UK)</th>
-          <th>{forecastLabel}</th>
-          {showActual && <th>Actual</th>}
-          {showActual && <th>Error</th>}
-          {showActual && !dayView && <th>Status</th>}
-          {showActual && !dayView && <th>Selection</th>}
+          <th className="text-left">Delivery (UK)</th>
+          <th className="text-right">{forecastLabel}</th>
+          {showActual && <th className="text-right">Actual</th>}
+          {showActual && <th className="text-right">Error</th>}
         </tr>
       </thead>
       <tbody>
@@ -35,14 +38,12 @@ export const IntervalTable = ({
                 ? formatUkDate(item.start_time)
                 : formatUk(item.start_time)}
             </td>
-            <td>{formatMw(item.forecast_mw)}</td>
-            {showActual && <td>{formatMw(item.actual_mw)}</td>}
-            {showActual && <td>{formatMw(item.error_mw)}</td>}
-            {showActual && !dayView && <td>{item.status}</td>}
-            {showActual && !dayView && (
-              <td className="text-muted-foreground">
-                {item.reason ?? "Latest forecast before cutoff"}
-              </td>
+            <td className="text-right">{formatMw(item.forecast_mw)}</td>
+            {showActual && (
+              <td className="text-right">{formatMw(item.actual_mw)}</td>
+            )}
+            {showActual && (
+              <td className="text-right">{formatSignedMw(item.error_mw)}</td>
             )}
           </tr>
         ))}
