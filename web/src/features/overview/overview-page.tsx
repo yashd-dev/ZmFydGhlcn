@@ -48,7 +48,7 @@ export const OverviewPage = () => {
   const historyQuery = useAccuracy({
     ...filters,
     endDate: filters.startDate,
-    startDate: `${filters.startDate.slice(0, 7)}-01`,
+    startDate: "2026-01-02",
   });
   const { data, error: historyError, isPending: historyPending } = historyQuery;
   const { error: forecastError, isPending: forecastPending } = forecastQuery;
