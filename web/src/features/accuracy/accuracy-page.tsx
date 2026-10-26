@@ -61,7 +61,9 @@ export const AccuracyPage = () => {
       <div>
         <h2 className="mt-1 text-2xl font-semibold">Forecast accuracy</h2>
         <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
-          Quantify the error in the forecasts used for day-ahead procurement.
+          Retrospective accuracy of forecasts available at the decision cutoff.
+          Actuals are shown here for evaluation, not as decision-time
+          information.
         </p>
       </div>
       <FilterBar singleDate />
@@ -94,7 +96,7 @@ export const AccuracyPage = () => {
               Forecast versus actual generation
             </h3>
             <p className="text-muted-foreground mb-3 text-xs">
-              Hover an interval to see the forecast error.
+              Actual generation is only used retrospectively to calculate error.
             </p>
             <ForecastActualChart intervals={data.intervals} showError />
           </section>

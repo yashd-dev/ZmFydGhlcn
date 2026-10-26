@@ -5,7 +5,7 @@ import type { Alignment } from "@/src/types/api";
 export const defaults = {
   alignment: "hour_mean" as Alignment,
   cutoff: "09:00",
-  endDate: "2026-01-31",
+  endDate: "2026-02-01",
   interval: "",
   startDate: "2026-01-20",
 };

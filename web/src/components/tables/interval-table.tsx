@@ -23,8 +23,8 @@ export const IntervalTable = ({
           <th>{forecastLabel}</th>
           {showActual && <th>Actual</th>}
           {showActual && <th>Error</th>}
-          {showActual && <th>Status</th>}
-          {showActual && <th>Reason</th>}
+          {showActual && !dayView && <th>Status</th>}
+          {showActual && !dayView && <th>Selection</th>}
         </tr>
       </thead>
       <tbody>
@@ -38,10 +38,10 @@ export const IntervalTable = ({
             <td>{formatMw(item.forecast_mw)}</td>
             {showActual && <td>{formatMw(item.actual_mw)}</td>}
             {showActual && <td>{formatMw(item.error_mw)}</td>}
-            {showActual && <td>{item.status}</td>}
-            {showActual && (
+            {showActual && !dayView && <td>{item.status}</td>}
+            {showActual && !dayView && (
               <td className="text-muted-foreground">
-                {item.reason ?? "Matched"}
+                {item.reason ?? "Latest forecast before cutoff"}
               </td>
             )}
           </tr>
