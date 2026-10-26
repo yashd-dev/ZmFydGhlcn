@@ -69,7 +69,9 @@ export const ForecastActualChart = ({
               tickFormatter={(value: number) => `${Math.round(value / 1000)}k`}
             />
             <Tooltip content={<ChartTooltip showError={showError} />} />
-            {showActual && showLegend && <Legend />}
+            {showActual && showLegend && (
+              <Legend wrapperStyle={{ fontSize: 10 }} iconSize={8} />
+            )}
             <Line
               type="monotone"
               dataKey="forecast"

@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import { ForecastActualChart } from "@/src/components/charts/forecast-actual-chart";
 import { IntervalTable } from "@/src/components/tables/interval-table";
 import { useAccuracy } from "@/src/hooks/use-accuracy";
@@ -9,6 +7,36 @@ import { formatMwWhole } from "@/src/lib/formatters";
 import type { Forecast, Interval } from "@/src/types/api";
 
 import { DeliveryDateField, QueryState } from "../shared";
+
+const londonMidnight = (date: string) => {
+  const target = `${date}T00:00:00`;
+  let timestamp = Date.parse(`${date}T00:00:00Z`);
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    hour: "2-digit",
+    hourCycle: "h23",
+    minute: "2-digit",
+    month: "2-digit",
+    second: "2-digit",
+    timeZone: "Europe/London",
+    year: "numeric",
+  });
+  for (let i = 0; i < 2; i += 1) {
+    const parts = Object.fromEntries(
+      formatter.formatToParts(timestamp).map(({ type, value }) => [type, value])
+    );
+    const local = Date.UTC(
+      Number(parts.year),
+      Number(parts.month) - 1,
+      Number(parts.day),
+      Number(parts.hour),
+      Number(parts.minute),
+      Number(parts.second)
+    );
+    timestamp += Date.parse(`${target}Z`) - local;
+  }
+  return timestamp;
+};
 
 export const OverviewPage = () => {
   const { filters } = useUrlFilters();
@@ -22,7 +50,6 @@ export const OverviewPage = () => {
     endDate: filters.startDate,
     startDate: `${filters.startDate.slice(0, 7)}-01`,
   });
-  const [view, setView] = useState<"chart" | "table">("chart");
   const { data, error: historyError, isPending: historyPending } = historyQuery;
   const { error: forecastError, isPending: forecastPending } = forecastQuery;
   const selected = new Map<string, Forecast>();
@@ -53,12 +80,30 @@ export const OverviewPage = () => {
     month: "short",
     timeZone: "Europe/London",
   }).format(new Date(`${filters.startDate}T12:00:00`));
-  const averageForecast = forecastIntervals.length
-    ? forecastIntervals.reduce(
-        (sum, interval) => sum + (interval.forecast_mw ?? 0),
-        0
-      ) / forecastIntervals.length
+  const dayStart = londonMidnight(filters.startDate);
+  const nextDate = new Date(`${filters.startDate}T12:00:00Z`);
+  nextDate.setUTCDate(nextDate.getUTCDate() + 1);
+  const nextDateLabel = nextDate.toISOString().slice(0, 10);
+  const dayEnd = londonMidnight(nextDateLabel);
+  const dayHours = (dayEnd - dayStart) / 3_600_000;
+  const dayForecasts = forecastIntervals
+    .filter((item) => {
+      const time = Date.parse(item.start_time);
+      return time >= dayStart && time < dayEnd;
+    })
+    .toSorted((a, b) => Date.parse(a.start_time) - Date.parse(b.start_time));
+  const completeDay =
+    dayForecasts.length === dayHours &&
+    dayForecasts.every(
+      (item, index) =>
+        Date.parse(item.start_time) === dayStart + index * 3_600_000 &&
+        item.forecast_mw !== null &&
+        Number.isFinite(item.forecast_mw)
+    );
+  const dailyEnergy = completeDay
+    ? dayForecasts.reduce((sum, item) => sum + Number(item.forecast_mw), 0)
     : null;
+  const averageForecast = dailyEnergy === null ? null : dailyEnergy / dayHours;
   const handleRetry = async () => {
     await Promise.all([forecastQuery.refetch(), historyQuery.refetch()]);
   };
@@ -79,61 +124,43 @@ export const OverviewPage = () => {
       {data && (
         <>
           <section className="grid gap-8 lg:grid-cols-[300px_1fr] lg:gap-12">
-            <div
-              className={`flex flex-col justify-center ${view === "table" ? "lg:sticky lg:top-20 lg:self-start" : ""}`}
-            >
-              <p className="text-muted-foreground text-sm">
-                Average forecast, {deliveryDateLabel}
-              </p>
-              <p className="text-foreground mt-3 text-5xl font-semibold tracking-tight lg:text-[56px]">
-                {formatMwWhole(averageForecast)}
-                <span className="text-muted-foreground ml-1 text-xl font-medium">
-                  MW
-                </span>
-              </p>
-              <p className="text-muted-foreground mt-3 max-w-[26ch] text-sm">
-                Latest forecast published before the decision cutoff.
-              </p>
+            <div className="flex flex-col justify-around">
+              <div>
+                <p className="text-muted-foreground text-sm">
+                  Estimated wind energy for the day, {deliveryDateLabel}
+                </p>
+                <p className="text-foreground mt-3 text-5xl font-semibold tracking-tight lg:text-[56px]">
+                  {dailyEnergy === null
+                    ? "Unavailable"
+                    : dailyEnergy.toLocaleString("en-GB", {
+                        maximumFractionDigits: 2,
+                      })}
+                  <span className="text-muted-foreground ml-1 text-xl font-medium">
+                    MWh
+                  </span>
+                </p>
+                <p className="text-muted-foreground mt-3 text-sm">
+                  {dailyEnergy === null
+                    ? "Daily total unavailable: incomplete forecast"
+                    : "Estimated by treating each hourly forecast as average power over that hour."}
+                </p>
+              </div>
             </div>
             <section className="bg-card rounded-2xl p-4 shadow-sm ring-1 ring-black/10 sm:px-5">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h3 className="font-medium">Decision-time forecast</h3>
                   <p className="text-muted-foreground text-xs">
-                    Hourly generation (MW)
+                    Hourly forecast power (MW)
                   </p>
                 </div>
-                <div className="bg-muted flex rounded-xl p-1">
-                  <button
-                    className={`rounded-lg px-3 py-1.5 text-xs ${view === "chart" ? "bg-background text-primary font-medium shadow-sm" : "text-muted-foreground"}`}
-                    onClick={() => setView("chart")}
-                    type="button"
-                  >
-                    Chart
-                  </button>
-                  <button
-                    className={`rounded-lg px-3 py-1.5 text-xs ${view === "table" ? "bg-background text-primary font-medium shadow-sm" : "text-muted-foreground"}`}
-                    onClick={() => setView("table")}
-                    type="button"
-                  >
-                    Table
-                  </button>
-                </div>
               </div>
-              {view === "chart" ? (
-                <ForecastActualChart
-                  intervals={forecastIntervals}
-                  showActual={false}
-                  forecastName="Forecast available at cutoff"
-                  className="h-[200px] sm:h-[260px]"
-                />
-              ) : (
-                <IntervalTable
-                  intervals={forecastIntervals}
-                  showActual={false}
-                  forecastLabel="Forecast available at cutoff"
-                />
-              )}
+              <ForecastActualChart
+                intervals={dayForecasts}
+                showActual={false}
+                forecastName="Forecast power (MW)"
+                className="h-[200px] sm:h-[260px]"
+              />
             </section>
           </section>
           <section className="border-border border-t pt-8">
@@ -205,6 +232,32 @@ export const OverviewPage = () => {
                 className="h-[200px] sm:h-[260px]"
               />
             </section>
+          </section>
+          <section className="border-border space-y-4 border-t pt-8">
+            <div>
+              <h2 className="text-lg font-semibold">
+                Selected day hourly forecast
+              </h2>
+              <p className="text-muted-foreground mt-1.5 text-sm">
+                Forecast power for each delivery hour on {deliveryDateLabel},
+                using forecasts published by {filters.cutoff} UK time on the
+                previous day.
+                <br />
+                Average forecast power: {" "}
+                <strong className="text-foreground font-semibold">
+                  {formatMwWhole(averageForecast)} MW
+                </strong>
+                .
+              </p>
+            </div>
+            <div className="bg-card rounded-2xl p-4 shadow-sm ring-1 ring-black/10 sm:px-5">
+              <IntervalTable
+                intervals={dayForecasts}
+                showActual={false}
+                forecastLabel="Forecast power, MW"
+                showPublishTime
+              />
+            </div>
           </section>
         </>
       )}
