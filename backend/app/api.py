@@ -30,9 +30,9 @@ def validate_period(start: date, end: date) -> None:
             status_code=422,
             detail="date range is outside the configured evaluation period",
         )
-    if (end - start).days >= 31:
+    if (end - start).days > 31:
         raise HTTPException(
-            status_code=422, detail="date range must be shorter than 31 days"
+            status_code=422, detail="date range must span 31 days or fewer"
         )
 
 

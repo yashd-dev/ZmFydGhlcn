@@ -30,7 +30,7 @@ class Settings:
     default_cutoff: str = os.getenv("DEFAULT_CUTOFF", "09:00")
     timezone: str = os.getenv("EVAL_TIMEZONE", "Europe/London")
     evaluation_from: str = os.getenv("EVAL_DECISION_FROM", "2026-01-01")
-    evaluation_to: str = os.getenv("EVAL_DECISION_TO", "2026-01-31")
+    evaluation_to: str = os.getenv("EVAL_DECISION_TO", "2026-02-01")
 
 
 settings = Settings()
