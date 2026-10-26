@@ -3,7 +3,7 @@ from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Query
 
-from .config import settings
+from .config import DEFAULT_CUTOFF, EVALUATION_FROM, EVALUATION_TO, TIMEZONE
 from .repository import repository
 from .schemas import (
     AccuracyResponse,
@@ -23,8 +23,8 @@ router = APIRouter(prefix="/api/v1")
 
 
 def validate_period(start: date, end: date, *, allow_prior_day: bool = False) -> None:
-    configured_start = date.fromisoformat(settings.evaluation_from)
-    configured_end = date.fromisoformat(settings.evaluation_to)
+    configured_start = date.fromisoformat(EVALUATION_FROM)
+    configured_end = date.fromisoformat(EVALUATION_TO)
     minimum_start = (
         configured_start - timedelta(days=1) if allow_prior_day else configured_start
     )
@@ -53,7 +53,7 @@ def health() -> dict[str, object]:
 def accuracy(
     start_date: date = Query(...),
     end_date: date = Query(...),
-    cutoff: str = Query(settings.default_cutoff),
+    cutoff: str = Query(DEFAULT_CUTOFF),
     alignment: Literal["hour_mean", "hour_start_point"] = Query("hour_mean"),
 ) -> AccuracyResponse:
     validate_period(start_date, end_date, allow_prior_day=True)
@@ -66,7 +66,7 @@ def accuracy(
     return AccuracyResponse(
         period={"start_date": start_date, "end_date": end_date},
         policy=PolicyResponse(
-            cutoff=cutoff, timezone=settings.timezone, alignment=alignment
+            cutoff=cutoff, timezone=TIMEZONE, alignment=alignment
         ),
         metrics=metric_values,
         excluded_count=sum(exclusions.values()),
@@ -90,7 +90,7 @@ def accuracy(
 def forecasts(
     start_date: date = Query(...),
     end_date: date = Query(...),
-    cutoff: str = Query(settings.default_cutoff),
+    cutoff: str = Query(DEFAULT_CUTOFF),
 ) -> list[ForecastResponse]:
     validate_period(start_date, end_date)
     try:

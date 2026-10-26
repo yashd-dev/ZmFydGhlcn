@@ -4,7 +4,7 @@ from typing import Any
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from .config import settings
+from .config import EVALUATION_FROM, EVALUATION_TO
 
 BMRS_BASE_URL = "https://data.elexon.co.uk/bmrs/api/v1/datasets"
 
@@ -22,8 +22,8 @@ def _fetch(dataset: str, params: dict[str, str]) -> list[dict[str, Any]]:
 
 
 def fetch_seed_data() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    start = date.fromisoformat(settings.evaluation_from)
-    end = date.fromisoformat(settings.evaluation_to)
+    start = date.fromisoformat(EVALUATION_FROM)
+    end = date.fromisoformat(EVALUATION_TO)
     actuals = _fetch(
         "FUELHH",
         {

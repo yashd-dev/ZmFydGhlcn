@@ -1,8 +1,11 @@
 from dataclasses import dataclass
-from datetime import date
 import os
 from pathlib import Path
-from zoneinfo import ZoneInfo
+
+DEFAULT_CUTOFF = "09:00"
+TIMEZONE = "Europe/London"
+EVALUATION_FROM = "2026-01-02"
+EVALUATION_TO = "2026-02-01"
 
 
 def _load_local_env() -> None:
@@ -20,31 +23,15 @@ _load_local_env()
 
 @dataclass(frozen=True)
 class Settings:
-    app_env: str = os.getenv("APP_ENV", "development")
     db_url: str | None = os.getenv("DB_URL")
     allowed_origins: tuple[str, ...] = tuple(
         origin.strip()
         for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
         if origin.strip()
     )
-    default_cutoff: str = os.getenv("DEFAULT_CUTOFF", "09:00")
-    timezone: str = os.getenv("EVAL_TIMEZONE", "Europe/London")
-    evaluation_from: str = os.getenv("EVAL_DECISION_FROM", "2026-01-02")
-    evaluation_to: str = os.getenv("EVAL_DECISION_TO", "2026-02-01")
 
 
 settings = Settings()
-
-
-def validate_settings() -> None:
-    if date.fromisoformat(settings.evaluation_from) > date.fromisoformat(
-        settings.evaluation_to
-    ):
-        raise ValueError("EVAL_DECISION_FROM must be before EVAL_DECISION_TO")
-    ZoneInfo(settings.timezone)
-    hour, minute = (int(part) for part in settings.default_cutoff.split(":", 1))
-    if not 0 <= hour <= 23 or minute not in (0, 30):
-        raise ValueError("DEFAULT_CUTOFF must be on a 30-minute boundary")
 
 
 def require_db_url() -> str:

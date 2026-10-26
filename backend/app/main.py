@@ -4,13 +4,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api import router
-from .config import settings, validate_settings
+from .config import settings
 from .repository import repository
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    validate_settings()
     repository.initialize()
     repository.seed_if_empty()
     try:

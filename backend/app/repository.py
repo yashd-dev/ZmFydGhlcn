@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 import psycopg
 from psycopg_pool import ConnectionPool
 
-from .config import require_db_url, settings
+from .config import EVALUATION_FROM, EVALUATION_TO, TIMEZONE, require_db_url
 from .domain import Actual, Forecast
 
 
@@ -41,9 +41,9 @@ class Repository:
     def seed_if_empty(self) -> None:
         from .bmrs import fetch_seed_data
 
-        start = date.fromisoformat(settings.evaluation_from) - timedelta(days=1)
-        end = date.fromisoformat(settings.evaluation_to) + timedelta(days=1)
-        timezone = ZoneInfo(settings.timezone)
+        start = date.fromisoformat(EVALUATION_FROM) - timedelta(days=1)
+        end = date.fromisoformat(EVALUATION_TO) + timedelta(days=1)
+        timezone = ZoneInfo(TIMEZONE)
         start_time = datetime.combine(start, time.min, timezone).astimezone(UTC)
         end_time = datetime.combine(end, time.min, timezone).astimezone(UTC)
         with self.connection() as connection:
